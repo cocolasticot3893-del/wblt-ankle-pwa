@@ -27,7 +27,7 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding-bottom: 82px;
+      padding-bottom: 84px;
     }
     header {
       padding: 14px 16px;
@@ -52,7 +52,8 @@
       color: var(--muted);
     }
     .sync-pill.ok { color: var(--green); border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.12); }
-    .sync-pill.err { color: var(--amber); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.12); }
+    .sync-pill.err { color: var(--red); border-color: rgba(248,113,113,0.45); background: rgba(248,113,113,0.14); }
+    .sync-pill.warn { color: var(--amber); border-color: rgba(245,158,11,0.45); background: rgba(245,158,11,0.14); }
     .container { padding: 14px 15px; max-width: 520px; margin: 0 auto; }
     .card {
       background: var(--card);
@@ -135,11 +136,11 @@
     /* Boutons principaux */
     .btn {
       width: 100%;
-      padding: 14px 16px;
+      padding: 13px 15px;
       border-radius: 12px;
       border: none;
       font-weight: 800;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -148,8 +149,44 @@
     }
     .btn:active { transform: scale(0.98); }
     .btn-primary { background: var(--green); color: #042117; }
+    .btn-accent { background: var(--accent); color: #051321; }
     .btn-ghost { background: var(--card-2); color: var(--text); border: 1px solid var(--border); }
     .btn-sm { padding: 7px 11px; font-size: 0.78rem; width: auto; }
+
+    /* Alertes Champs Non Valides */
+    .field-alert {
+      background: rgba(248, 113, 113, 0.14);
+      border: 1px solid var(--red);
+      color: #fecaca;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+    .field-ok {
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid var(--green);
+      color: #bbf7d0;
+      border-radius: 12px;
+      padding: 11px 12px;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      margin-top: 10px;
+    }
+    .log-box {
+      background: #0b0f17;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.74rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      margin-top: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
 
     /* Bilan Post-Mesure */
     .verdict-banner {
@@ -287,12 +324,14 @@
 <!-- VUE 2 : BILAN POST-MESURE INSTANTANÉ -->
 <main class="container hidden" id="view-verdict">
   <div id="verdictBox" class="verdict-banner verdict-green">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-size:0.75rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;" id="verdictTag">BILAN MATINAL</span>
-      <span id="pushStatusText" style="font-size:0.75rem;font-weight:700;">Envoi Intervals...</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
+      <span style="font-size:0.75rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;">BILAN MATINAL</span>
+      <span id="pushStatusText" style="font-size:0.75rem;font-weight:700;text-align:right;">Envoi Intervals...</span>
     </div>
     <h2 class="verdict-title" id="verdictHeadline">OK — FEU VERT MÉCANIQUE</h2>
     <div id="verdictSummary" style="font-size:0.83rem;opacity:0.92;"></div>
+
+    <div id="verdictFieldAlert" class="field-alert hidden"></div>
 
     <div class="kpi-grid">
       <div class="kpi-card">
@@ -340,32 +379,38 @@
   </div>
 </main>
 
-<!-- VUE 4 : PARAMÈTRES API INTERVALS.ICU -->
+<!-- VUE 4 : PARAMÈTRES & CRÉATION CHAMPS INTERVALS.ICU -->
 <main class="container hidden" id="view-settings">
   <div class="card">
-    <h2>Connexion Directe Intervals.icu</h2>
+    <h2>1. Identifiants Intervals.icu</h2>
     <p style="font-size:0.8rem;color:var(--muted);margin-top:0;line-height:1.45;">
-      Tes identifiants restent stockés <strong>uniquement en local</strong> sur ton Pixel 7 et envoient directement les données vers <code>intervals.icu/api/v1</code>.
+      Stockés <strong>uniquement en local</strong> sur ce téléphone. <code>Athlete ID = 0</code> correspond au compte lié à la clé API.
     </p>
 
-    <label style="font-size:0.8rem;font-weight:700;">Athlete ID (ex: i208793 ou 0)</label>
+    <label style="font-size:0.8rem;font-weight:700;">Athlete ID (ex: 0 ou i208793)</label>
     <input type="text" id="cfgAthleteId" placeholder="0" />
 
     <label style="font-size:0.8rem;font-weight:700;">Clé API Intervals.icu (Settings → Developer Settings)</label>
     <input type="password" id="cfgApiKey" placeholder="Colle ta clé API ici" />
 
-    <button class="btn btn-primary" onclick="saveApiConfig()">✓ Enregistrer la configuration</button>
+    <div class="row">
+      <button class="btn btn-ghost" onclick="saveApiConfig()">💾 Enregistrer</button>
+      <button class="btn btn-ghost" onclick="checkAndCreateFields(false)">🔍 Vérifier champs</button>
+    </div>
   </div>
 
   <div class="card">
-    <h2>Champs Wellness à créer dans Intervals.icu</h2>
-    <p style="font-size:0.79rem;color:var(--muted);margin:0;line-height:1.5;">
-      Dans <strong>Intervals.icu → Paramètres → Champs personnalisés (Bien-être)</strong>, crée ces 4 champs numériques (Code exact) pour tracer tes courbes :<br>
-      • <code>WBLT_G</code> (cm)<br>
-      • <code>WBLT_D</code> (cm)<br>
-      • <code>WBLT_Asym</code> (cm)<br>
-      • <code>Raideur_Cheville</code> (min)
+    <h2>2. Créer les champs WBLT dans Intervals.icu</h2>
+    <p style="font-size:0.79rem;color:var(--muted);margin-top:0;line-height:1.45;">
+      Crée automatiquement sur ton compte Intervals.icu les champs : <code>WBLT_G</code>, <code>WBLT_D</code>, <code>WBLT_Asym</code> et <code>Raideur_Cheville</code>.
     </p>
+
+    <button class="btn btn-accent" onclick="checkAndCreateFields(true)">
+      ⚡ Créer / Valider les champs dans Intervals.icu
+    </button>
+
+    <div id="fieldStatusBanner" class="hidden"></div>
+    <div id="fieldDiagnosticLog" class="log-box hidden"></div>
   </div>
 </main>
 
@@ -382,6 +427,13 @@
 </nav>
 
 <script>
+const REQUIRED_FIELDS = [
+  { code: 'WBLT_G', name: 'WBLT Gauche', units: 'cm', type: 'NUMBER' },
+  { code: 'WBLT_D', name: 'WBLT Droite', units: 'cm', type: 'NUMBER' },
+  { code: 'WBLT_Asym', name: 'WBLT Asymetrie G/D', units: 'cm', type: 'NUMBER' },
+  { code: 'Raideur_Cheville', name: 'Raideur Cheville Matin', units: 'min', type: 'NUMBER' }
+];
+
 let state = {
   L: 11.5,
   R: 11.5,
@@ -465,7 +517,6 @@ function evaluateStatus(entry, base) {
   let reasons = [];
   let directives = [];
 
-  // Critères ROUGE (Stop / Décharge)
   if (worstDrop < -1.0 || entry.stiffness > 15 || entry.achilles || minVal < 10.0) {
     level = 'red';
     headline = 'STOP — DÉCHARGE CHEVILLE / TENDON';
@@ -479,9 +530,7 @@ function evaluateStatus(entry, base) {
       'Vélo : Pédalage souple uniquement (> 90 rpm, faible couple, rester assis). Zéro sprint Z7 ni force à 50–65 rpm.',
       'Renforcement / Récup : Zéro pliométrie ni kBox4 dynamique. Applique 10–14j d’isométrie lourde soléaire (genou 90°) ou KAATSU Cycle jambes (G+L/M).'
     ];
-  }
-  // Critères ORANGE (Vigilance / Adaptation)
-  else if (worstDrop <= -0.6 || asym >= 0.5 || entry.stiffness >= 5 || entry.anterior || minVal < 11.0) {
+  } else if (worstDrop <= -0.6 || asym >= 0.5 || entry.stiffness >= 5 || entry.anterior || minVal < 11.0) {
     level = 'amber';
     headline = 'VIGILANCE — ADAPTATION REQUISE';
     if (worstDrop <= -0.6) reasons.push(`Baisse modérée WBLT (${worstDrop} cm vs baseline)`);
@@ -496,9 +545,7 @@ function evaluateStatus(entry, base) {
         ? 'Conflit antérieur : Sur toute flexion de cheville, stoppe strictement la descente du talon à l’horizontale (zéro amplitude négative).'
         : 'Tapis / Trail : Privilégie le vélo ou une pente régulière sans descente technique.'
     ];
-  }
-  // Critères VERT (GO)
-  else {
+  } else {
     reasons.push(`Amplitude validée (G: ${entry.L} cm / D: ${entry.R} cm, Δ ${asym} cm) et raideur < 5 min.`);
     directives = [
       'Charge libre validée : kBox4 excentrique (Bent-Knee / Straight-Leg 2:1, arrêt à l’horizontale) autorisé.',
@@ -524,23 +571,21 @@ async function submitMeasurement() {
     stiffness: state.stiffness,
     anterior: state.anterior,
     achilles: state.achilles,
-    synced: false
+    synced: false,
+    invalidFields: []
   };
 
   const verdict = evaluateStatus(entry, base);
   entry.level = verdict.level;
   entry.asym = verdict.asym;
 
-  // Sauvegarde locale (remplace l'entrée du même jour si re-testé)
   let logs = getLogs().filter(l => l.date !== entry.date);
   logs.unshift(entry);
   localStorage.setItem('wblt_logs', JSON.stringify(logs));
 
-  // Affichage immédiat du Bilan
   renderVerdict(entry, verdict);
   switchTab('verdict');
 
-  // Push immédiat vers Intervals.icu
   await pushToIntervals(entry, verdict);
 }
 
@@ -559,27 +604,150 @@ function renderVerdict(entry, verdict) {
   document.getElementById('kpiAsym').textContent = `${verdict.asym.toFixed(1)} cm`;
 
   document.getElementById('directiveList').innerHTML = verdict.directives.map(d => `<li>${d}</li>`).join('');
+  renderInvalidFieldsAlert(entry.invalidFields || []);
 }
 
-// --- API INTERVALS.ICU ---
+function renderInvalidFieldsAlert(invalidList) {
+  const alertEl = document.getElementById('verdictFieldAlert');
+  if (!invalidList || !invalidList.length) {
+    alertEl.classList.add('hidden');
+    alertEl.textContent = '';
+    return;
+  }
+  alertEl.classList.remove('hidden');
+  alertEl.innerHTML = `<strong>⚠ Champs non valides ou absents sur Intervals.icu :</strong><br>${invalidList.map(x => `• ${x}`).join('<br>')}<br><em>Va dans l'onglet <strong>Intervals API</strong> pour créer ou vérifier ces champs.</em>`;
+}
+
+// --- API INTERVALS.ICU : CHAMPS & VALIDATION ---
 function getApiConfig() {
-  return JSON.parse(localStorage.getItem('wblt_intervals_cfg') || '{"athleteId":"0","apiKey":""}');
+  const saved = JSON.parse(localStorage.getItem('wblt_intervals_cfg') || '{"athleteId":"0","apiKey":""}');
+  const idInput = document.getElementById('cfgAthleteId');
+  const keyInput = document.getElementById('cfgApiKey');
+  return {
+    athleteId: (idInput && idInput.value.trim()) || saved.athleteId || '0',
+    apiKey: (keyInput && keyInput.value.trim()) || saved.apiKey || ''
+  };
 }
 
 function saveApiConfig() {
-  const cfg = {
-    athleteId: document.getElementById('cfgAthleteId').value.trim() || '0',
-    apiKey: document.getElementById('cfgApiKey').value.trim()
-  };
+  const cfg = getApiConfig();
   localStorage.setItem('wblt_intervals_cfg', JSON.stringify(cfg));
   updateSyncBadge(cfg.apiKey ? 'API Prête' : 'Non configuré', cfg.apiKey ? 'ok' : '');
-  alert('Configuration Intervals.icu enregistrée localement.');
+  alert('Identifiants Intervals.icu enregistrés localement.');
 }
 
 function updateSyncBadge(text, cls) {
   const b = document.getElementById('syncBadge');
   b.textContent = text;
   b.className = 'sync-pill ' + (cls || '');
+}
+
+async function fetchDefinedWellnessFields(cfg) {
+  const auth = 'Basic ' + btoa('API_KEY:' + cfg.apiKey);
+  const url = `https://intervals.icu/api/v1/athlete/${encodeURIComponent(cfg.athleteId || '0')}/wellness-fields`;
+  const res = await fetch(url, { headers: { 'Authorization': auth, 'Accept': 'application/json' } });
+  if (!res.ok) {
+    throw new Error(`HTTP ${res.status} lors de la lecture des champs bien-être`);
+  }
+  const list = await res.json();
+  return Array.isArray(list) ? list : [];
+}
+
+async function checkAndCreateFields(createMissing) {
+  // Sauvegarde d'abord ce qui est saisi dans les champs input
+  const cfg = getApiConfig();
+  localStorage.setItem('wblt_intervals_cfg', JSON.stringify(cfg));
+
+  const banner = document.getElementById('fieldStatusBanner');
+  const logBox = document.getElementById('fieldDiagnosticLog');
+  banner.classList.remove('hidden');
+  logBox.classList.remove('hidden');
+
+  if (!cfg.apiKey) {
+    banner.className = 'field-alert';
+    banner.textContent = 'Clé API manquante. Renseigne ta clé API Intervals.icu ci-dessus.';
+    updateSyncBadge('Clé manquante', 'err');
+    return;
+  }
+
+  logBox.textContent = 'Connexion à Intervals.icu...';
+  const lines = [];
+
+  try {
+    const existing = await fetchDefinedWellnessFields(cfg);
+    const existingMap = new Map();
+    for (const f of existing) {
+      if (f && f.code) existingMap.set(f.code, f);
+    }
+
+    const auth = 'Basic ' + btoa('API_KEY:' + cfg.apiKey);
+    const postUrl = `https://intervals.icu/api/v1/athlete/${encodeURIComponent(cfg.athleteId || '0')}/wellness-fields`;
+    const problems = [];
+
+    for (const req of REQUIRED_FIELDS) {
+      if (existingMap.has(req.code)) {
+        const found = existingMap.get(req.code);
+        const typeOk = !found.type || String(found.type).toUpperCase() === 'NUMBER';
+        if (!typeOk) {
+          problems.push(`${req.code} (type actuel "${found.type}" != NUMBER)`);
+          lines.push(`[INVALIDE] ${req.code} : type "${found.type}" incompatible avec une valeur numérique.`);
+        } else {
+          lines.push(`[OK] ${req.code} (${found.name || req.name}, unité: ${found.units || req.units})`);
+        }
+        continue;
+      }
+
+      if (!createMissing) {
+        problems.push(`${req.code} (absent)`);
+        lines.push(`[MANQUANT] ${req.code} non trouvé sur Intervals.icu.`);
+        continue;
+      }
+
+      const payload = {
+        code: req.code,
+        name: req.name,
+        description: `${req.name} — suivi matinal WBLT / raideur cheville`,
+        type: req.type,
+        units: req.units
+      };
+
+      const postRes = await fetch(postUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': auth,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (postRes.ok) {
+        lines.push(`[CRÉÉ] ${req.code} (${req.name} [${req.units}])`);
+      } else {
+        const errText = await postRes.text();
+        problems.push(`${req.code} (création refusée HTTP ${postRes.status})`);
+        lines.push(`[ERREUR ${postRes.status}] ${req.code} : ${errText || 'Rejeté par Intervals.icu'}`);
+      }
+    }
+
+    logBox.textContent = lines.join('\n');
+    localStorage.setItem('wblt_invalid_fields', JSON.stringify(problems));
+
+    if (problems.length === 0) {
+      banner.className = 'field-ok';
+      banner.textContent = '✓ Tous les champs WBLT (WBLT_G, WBLT_D, WBLT_Asym, Raideur_Cheville) sont valides sur Intervals.icu.';
+      updateSyncBadge('✓ Champs OK', 'ok');
+    } else {
+      banner.className = 'field-alert';
+      banner.innerHTML = `<strong>⚠ Champs non valides ou absents :</strong><br>${problems.join('<br>')}`;
+      updateSyncBadge('Champs invalides', 'err');
+    }
+  } catch (e) {
+    banner.className = 'field-alert';
+    banner.textContent = `Erreur de communication Intervals.icu : ${e.message}`;
+    logBox.textContent = e.message;
+    updateSyncBadge('Erreur API', 'err');
+  }
 }
 
 async function pushToIntervals(entry, verdict) {
@@ -592,18 +760,35 @@ async function pushToIntervals(entry, verdict) {
     return;
   }
 
-  statusEl.textContent = '⏳ Envoi vers Intervals.icu...';
+  statusEl.textContent = '⏳ Vérification & envoi Intervals.icu...';
   const auth = 'Basic ' + btoa('API_KEY:' + cfg.apiKey);
-  const url = `https://intervals.icu/api/v1/athlete/${encodeURIComponent(cfg.athleteId || '0')}/wellness/${entry.date}`;
+  const baseUrl = `https://intervals.icu/api/v1/athlete/${encodeURIComponent(cfg.athleteId || '0')}`;
+  const wellnessUrl = `${baseUrl}/wellness/${entry.date}`;
 
   const statusLabel = verdict.level === 'green' ? 'VERT (GO)' : (verdict.level === 'amber' ? 'ORANGE (VIGILANCE)' : 'ROUGE (STOP)');
   const flags = [entry.anterior ? 'Pincement ant.' : '', entry.achilles ? 'Achille sensible' : ''].filter(Boolean).join(', ');
   const summaryLine = `[WBLT ${entry.time}] G: ${entry.L.toFixed(1)}cm | D: ${entry.R.toFixed(1)}cm (Δ ${entry.asym.toFixed(1)}cm) | Raideur: ${entry.stiffness}min${flags ? ' | ' + flags : ''} | Statut: ${statusLabel}`;
 
+  const invalidFields = [];
+
   try {
-    // 1. Lecture éventuelle des commentaires existants du jour (pour ne pas écraser Handgrip/PVT)
+    // 1. Vérifier les champs personnalisés définis côté Intervals.icu
+    let definedCodes = null;
+    try {
+      const fieldsList = await fetchDefinedWellnessFields(cfg);
+      definedCodes = new Set(fieldsList.map(f => f.code));
+      for (const req of REQUIRED_FIELDS) {
+        if (!definedCodes.has(req.code)) {
+          invalidFields.push(`${req.code} (non créé sur Intervals.icu)`);
+        }
+      }
+    } catch (_) {
+      // Si GET /wellness-fields échoue, on tentera quand même le PUT et on analysera la réponse
+    }
+
+    // 2. Lecture commentaires existants du jour
     let existingComments = '';
-    const getRes = await fetch(url, { headers: { 'Authorization': auth } });
+    const getRes = await fetch(wellnessUrl, { headers: { 'Authorization': auth } });
     if (getRes.ok) {
       const data = await getRes.json();
       if (data && data.comments) {
@@ -614,18 +799,24 @@ async function pushToIntervals(entry, verdict) {
           .trim();
       }
     }
-
     const mergedComments = existingComments ? `${existingComments}\n${summaryLine}` : summaryLine;
 
-    const payload = {
+    // 3. Construction du payload (n'envoie que les champs non signalés absents si definedCodes est connu)
+    const customValues = {
       WBLT_G: entry.L,
       WBLT_D: entry.R,
       WBLT_Asym: entry.asym,
-      Raideur_Cheville: entry.stiffness,
-      comments: mergedComments
+      Raideur_Cheville: entry.stiffness
     };
 
-    const putRes = await fetch(url, {
+    const payload = { comments: mergedComments };
+    for (const [code, val] of Object.entries(customValues)) {
+      if (!definedCodes || definedCodes.has(code)) {
+        payload[code] = val;
+      }
+    }
+
+    let putRes = await fetch(wellnessUrl, {
       method: 'PUT',
       headers: {
         'Authorization': auth,
@@ -634,21 +825,47 @@ async function pushToIntervals(entry, verdict) {
       body: JSON.stringify(payload)
     });
 
+    // Si rejet 400/422 sur un champ custom invalide, réessayer avec comments seul et signaler les champs invalides
+    if (!putRes.ok && (putRes.status === 400 || putRes.status === 422)) {
+      const errBody = await putRes.text();
+      for (const code of Object.keys(customValues)) {
+        if (!invalidFields.some(x => x.startsWith(code))) {
+          invalidFields.push(`${code} (rejeté par Intervals.icu : ${errBody.slice(0, 80)})`);
+        }
+      }
+      putRes = await fetch(wellnessUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': auth,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ comments: mergedComments })
+      });
+    }
+
     if (!putRes.ok) throw new Error(`HTTP ${putRes.status}`);
 
-    // Marquer comme synchronisé
+    // Sauvegarder l'état des champs invalides sur l'entrée
     const logs = getLogs();
     const idx = logs.findIndex(l => l.date === entry.date);
     if (idx !== -1) {
-      logs[idx].synced = true;
+      logs[idx].synced = invalidFields.length === 0;
+      logs[idx].invalidFields = invalidFields;
       localStorage.setItem('wblt_logs', JSON.stringify(logs));
     }
+    localStorage.setItem('wblt_invalid_fields', JSON.stringify(invalidFields));
+    renderInvalidFieldsAlert(invalidFields);
 
-    statusEl.textContent = '✓ Synchronisé sur Intervals.icu';
-    updateSyncBadge('✓ Sync OK', 'ok');
+    if (invalidFields.length > 0) {
+      statusEl.textContent = '⚠ Commentaire envoyé — Champs invalides détectés';
+      updateSyncBadge('Champs invalides', 'err');
+    } else {
+      statusEl.textContent = '✓ Synchronisé sur Intervals.icu';
+      updateSyncBadge('✓ Sync OK', 'ok');
+    }
   } catch (err) {
-    statusEl.textContent = '⚠ Sauvé en local (hors-ligne / erreur API)';
-    updateSyncBadge('En attente sync', 'err');
+    statusEl.textContent = `⚠ Sauvé en local (${err.message})`;
+    updateSyncBadge('En attente sync', 'warn');
   }
 }
 
@@ -673,6 +890,8 @@ function renderHistory() {
 
   list.innerHTML = logs.slice(0, 30).map(l => {
     const color = l.level === 'green' ? 'var(--green)' : (l.level === 'amber' ? 'var(--amber)' : 'var(--red)');
+    const hasBadFields = l.invalidFields && l.invalidFields.length > 0;
+    const syncLabel = hasBadFields ? '⚠ Champs invalides' : (l.synced ? '✓ Intervals' : 'Local');
     return `
       <div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
         <div>
@@ -681,13 +900,12 @@ function renderHistory() {
         </div>
         <div style="text-align:right;">
           <span style="color:${color};font-weight:800;font-size:0.78rem;">● ${l.level.toUpperCase()}</span>
-          <div style="font-size:0.68rem;color:var(--muted);">${l.synced ? '✓ Intervals' : 'Local'}</div>
+          <div style="font-size:0.68rem;color:${hasBadFields ? 'var(--red)' : 'var(--muted)'};">${syncLabel}</div>
         </div>
       </div>
     `;
   }).join('');
 
-  // Courbe SVG 30 derniers jours
   const recent = [...logs].slice(0, 30).reverse();
   const w = 320, h = 150, pad = 18;
   const minY = 8, maxY = 16;
@@ -734,13 +952,18 @@ function init() {
     document.getElementById('baseRefLabel').textContent = `Base 7j : G ${base.L} / D ${base.R} cm`;
   }
 
-  const cfg = getApiConfig();
-  document.getElementById('cfgAthleteId').value = cfg.athleteId || '0';
-  document.getElementById('cfgApiKey').value = cfg.apiKey || '';
-  if (cfg.apiKey) updateSyncBadge('API Prête', 'ok');
+  const savedCfg = JSON.parse(localStorage.getItem('wblt_intervals_cfg') || '{"athleteId":"0","apiKey":""}');
+  document.getElementById('cfgAthleteId').value = savedCfg.athleteId || '0';
+  document.getElementById('cfgApiKey').value = savedCfg.apiKey || '';
 
-  // Auto-sync des entrées locales non poussées si reconnexion
-  if (navigator.onLine && cfg.apiKey && logs.some(l => !l.synced)) {
+  const savedBad = JSON.parse(localStorage.getItem('wblt_invalid_fields') || '[]');
+  if (savedBad.length > 0) {
+    updateSyncBadge('Champs invalides', 'err');
+  } else if (savedCfg.apiKey) {
+    updateSyncBadge('API Prête', 'ok');
+  }
+
+  if (navigator.onLine && savedCfg.apiKey && logs.some(l => !l.synced)) {
     retryLastPush();
   }
 
