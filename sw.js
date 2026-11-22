@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'wblt-ankle-v2';
+﻿const CACHE_NAME = 'wblt-ankle-v4';
 const ASSETS = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', (e) => {
