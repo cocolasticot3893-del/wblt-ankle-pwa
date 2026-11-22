@@ -1,0 +1,754 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b0f17" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>WBLT & Raideur Cheville</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #0b0f17;
+      --card: #131b2b;
+      --card-2: #192438;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --green: #34d399;
+      --amber: #f59e0b;
+      --red: #f87171;
+      --border: #24324d;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding-bottom: 82px;
+    }
+    header {
+      padding: 14px 16px;
+      background: #101726;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+    h1 { font-size: 1.02rem; margin: 0; }
+    .subtitle { font-size: 0.74rem; color: var(--muted); margin-top: 2px; }
+    .sync-pill {
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .sync-pill.ok { color: var(--green); border-color: rgba(52,211,153,0.4); background: rgba(52,211,153,0.12); }
+    .sync-pill.err { color: var(--amber); border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.12); }
+    .container { padding: 14px 15px; max-width: 520px; margin: 0 auto; }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .card h2 { font-size: 0.92rem; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: center; }
+    .row { display: flex; gap: 8px; align-items: center; }
+
+    /* Presets Raideur */
+    .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .preset-btn {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 4px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-align: center;
+      cursor: pointer;
+    }
+    .preset-btn small { display: block; font-weight: 500; font-size: 0.68rem; color: var(--muted); margin-top: 2px; }
+    .preset-btn.active { background: var(--accent); color: #051321; border-color: var(--accent); }
+    .preset-btn.active small { color: #051321; }
+
+    /* Stepper WBLT */
+    .ankle-box {
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+    .val-display {
+      font-size: 1.75rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      min-width: 92px;
+      text-align: center;
+    }
+    .step-btn {
+      flex: 1;
+      padding: 12px 0;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0f1624;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .step-btn:active { transform: scale(0.96); background: var(--accent); color: #051321; }
+
+    /* Toggles tissus */
+    .toggle-btn {
+      width: 100%;
+      text-align: left;
+      padding: 11px 12px;
+      border-radius: 10px;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.83rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .toggle-btn.active {
+      background: rgba(248, 113, 113, 0.14);
+      border-color: var(--red);
+      color: #fecaca;
+    }
+
+    /* Boutons principaux */
+    .btn {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--green); color: #042117; }
+    .btn-ghost { background: var(--card-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-sm { padding: 7px 11px; font-size: 0.78rem; width: auto; }
+
+    /* Bilan Post-Mesure */
+    .verdict-banner {
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid;
+    }
+    .verdict-green { background: rgba(52, 211, 153, 0.12); border-color: var(--green); }
+    .verdict-amber { background: rgba(245, 158, 11, 0.14); border-color: var(--amber); }
+    .verdict-red   { background: rgba(248, 113, 113, 0.15); border-color: var(--red); }
+    .verdict-title { font-size: 1.12rem; font-weight: 800; margin: 0 0 4px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0; }
+    .kpi-card {
+      background: rgba(11, 15, 23, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px 6px;
+      text-align: center;
+    }
+    .kpi-val { font-size: 1.05rem; font-weight: 800; }
+    .kpi-lbl { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+    .directive-list { margin: 8px 0 0; padding-left: 18px; font-size: 0.84rem; line-height: 1.48; }
+    .directive-list li { margin-bottom: 6px; }
+
+    /* Inputs Config */
+    input[type="text"], input[type="password"] {
+      width: 100%;
+      background: var(--card-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 12px;
+      border-radius: 10px;
+      font-size: 0.88rem;
+      margin-top: 5px;
+      margin-bottom: 12px;
+    }
+
+    nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: #0f1624;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 8px 6px 12px;
+      z-index: 30;
+    }
+    nav button {
+      background: none; border: none; color: var(--muted);
+      font-size: 0.75rem; font-weight: 700;
+      display: flex; flex-direction: column; align-items: center; gap: 3px;
+    }
+    nav button.active { color: var(--accent); }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>WBLT & Raideur Cheville</h1>
+    <div class="subtitle" id="headerDate">Mesure matinale à froid</div>
+  </div>
+  <div class="sync-pill" id="syncBadge">Intervals.icu</div>
+</header>
+
+<!-- VUE 1 : SAISIE RAPIDE (< 30s) -->
+<main class="container" id="view-measure">
+  <div class="card">
+    <h2>
+      <span>1. Raideur matinale à froid</span>
+      <button class="btn btn-ghost btn-sm" onclick="toggleMemo()">Rappel protocole</button>
+    </h2>
+    <div id="protocolMemo" class="hidden" style="background:#0b0f17;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:10px;font-size:0.78rem;color:var(--muted);line-height:1.45;">
+      • <strong>À froid au réveil</strong>, pied nu perpendiculaire au mur.<br>
+      • <strong>Talon strictement collé</strong> au sol (0 mm de décollement).<br>
+      • <strong>Genou aligné</strong> dans l'axe du 2ᵉ–3ᵉ orteil.<br>
+      • Mesure = distance max <strong>gros orteil → mur</strong> (cible ≥ 11–12 cm).
+    </div>
+    <div class="preset-grid" id="stiffPresets">
+      <button class="preset-btn active" onclick="setStiffness(0, this)">0 min<small>Libre</small></button>
+      <button class="preset-btn" onclick="setStiffness(3, this)">&lt; 5 min<small>Transitoire</small></button>
+      <button class="preset-btn" onclick="setStiffness(10, this)">5–15 min<small>Modérée</small></button>
+      <button class="preset-btn" onclick="setStiffness(20, this)">&gt; 15 min<small>Alerte</small></button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span>2. Distance WBLT (Gros orteil → Mur)</span>
+      <span id="baseRefLabel" style="font-size:0.74rem;color:var(--muted);font-weight:500;">Base 7j : --</span>
+    </h2>
+
+    <div class="ankle-box">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--muted);margin-bottom:6px;">CHEVILLE GAUCHE</div>
+      <div class="row">
+        <button class="step-btn" onclick="adj('L', -0.5)">-0.5</button>
+        <button class="step-btn" onclick="adj('L', -0.1)">-0.1</button>
+        <div class="val-display" id="valL">11.5</div>
+        <button class="step-btn" onclick="adj('L', 0.1)">+0.1</button>
+        <button class="step-btn" onclick="adj('L', 0.5)">+0.5</button>
+      </div>
+    </div>
+
+    <div class="ankle-box" style="margin-bottom:0;">
+      <div style="font-size:0.78rem;font-weight:700;color:var(--muted);margin-bottom:6px;">CHEVILLE DROITE</div>
+      <div class="row">
+        <button class="step-btn" onclick="adj('R', -0.5)">-0.5</button>
+        <button class="step-btn" onclick="adj('R', -0.1)">-0.1</button>
+        <div class="val-display" id="valR">11.5</div>
+        <button class="step-btn" onclick="adj('R', 0.1)">+0.1</button>
+        <button class="step-btn" onclick="adj('R', 0.5)">+0.5</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3. Signaux tissulaires (optionnel)</h2>
+    <button class="toggle-btn" id="togAnterior" onclick="toggleFlag('anterior')">
+      <span>Pincement / douleur pli antérieur (talocrural)</span>
+      <span id="stateAnterior">NON</span>
+    </button>
+    <button class="toggle-btn" id="togAchilles" style="margin-bottom:0;" onclick="toggleFlag('achilles')">
+      <span>Sensibilité palpation tendon d'Achille</span>
+      <span id="stateAchilles">NON</span>
+    </button>
+  </div>
+
+  <button class="btn btn-primary" onclick="submitMeasurement()">
+    ✓ Valider · Voir Bilan & Envoyer Intervals.icu
+  </button>
+</main>
+
+<!-- VUE 2 : BILAN POST-MESURE INSTANTANÉ -->
+<main class="container hidden" id="view-verdict">
+  <div id="verdictBox" class="verdict-banner verdict-green">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:0.75rem;font-weight:800;letter-spacing:0.5px;text-transform:uppercase;" id="verdictTag">BILAN MATINAL</span>
+      <span id="pushStatusText" style="font-size:0.75rem;font-weight:700;">Envoi Intervals...</span>
+    </div>
+    <h2 class="verdict-title" id="verdictHeadline">OK — FEU VERT MÉCANIQUE</h2>
+    <div id="verdictSummary" style="font-size:0.83rem;opacity:0.92;"></div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-val" id="kpiL">11.5 cm</div>
+        <div class="kpi-lbl" id="kpiLDelta">Gauche</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="kpiR">11.5 cm</div>
+        <div class="kpi-lbl" id="kpiRDelta">Droite</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="kpiAsym">0.0 cm</div>
+        <div class="kpi-lbl">Asymétrie G/D</div>
+      </div>
+    </div>
+
+    <div style="font-size:0.8rem;font-weight:800;text-transform:uppercase;margin-top:10px;">Directives séance du jour :</div>
+    <ul class="directive-list" id="directiveList"></ul>
+  </div>
+
+  <div class="row">
+    <button class="btn btn-ghost" onclick="switchTab('measure')">✎ Modifier</button>
+    <button class="btn btn-ghost" id="retryPushBtn" onclick="retryLastPush()">↻ Re-sync Intervals</button>
+  </div>
+</main>
+
+<!-- VUE 3 : HISTORIQUE & BASELINES -->
+<main class="container hidden" id="view-history">
+  <div class="card">
+    <h2>
+      <span>Évolution 30 jours (G vs D)</span>
+      <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ CSV</button>
+    </h2>
+    <div id="chartContainer" style="width:100%;height:165px;background:#0b0f17;border:1px solid var(--border);border-radius:10px;padding:6px;"></div>
+    <div style="font-size:0.74rem;color:var(--muted);margin-top:6px;">
+      <span style="color:#38bdf8;">━</span> Gauche (cm) &nbsp;&nbsp;
+      <span style="color:#34d399;">━</span> Droite (cm) &nbsp;&nbsp;
+      <span style="color:#f59e0b;">┄</span> Seuil alerte (11.0 cm)
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Historique des relevés</h2>
+    <div id="historyList" style="font-size:0.82rem;color:var(--muted);">Aucun relevé enregistré.</div>
+  </div>
+</main>
+
+<!-- VUE 4 : PARAMÈTRES API INTERVALS.ICU -->
+<main class="container hidden" id="view-settings">
+  <div class="card">
+    <h2>Connexion Directe Intervals.icu</h2>
+    <p style="font-size:0.8rem;color:var(--muted);margin-top:0;line-height:1.45;">
+      Tes identifiants restent stockés <strong>uniquement en local</strong> sur ton Pixel 7 et envoient directement les données vers <code>intervals.icu/api/v1</code>.
+    </p>
+
+    <label style="font-size:0.8rem;font-weight:700;">Athlete ID (ex: i208793 ou 0)</label>
+    <input type="text" id="cfgAthleteId" placeholder="0" />
+
+    <label style="font-size:0.8rem;font-weight:700;">Clé API Intervals.icu (Settings → Developer Settings)</label>
+    <input type="password" id="cfgApiKey" placeholder="Colle ta clé API ici" />
+
+    <button class="btn btn-primary" onclick="saveApiConfig()">✓ Enregistrer la configuration</button>
+  </div>
+
+  <div class="card">
+    <h2>Champs Wellness à créer dans Intervals.icu</h2>
+    <p style="font-size:0.79rem;color:var(--muted);margin:0;line-height:1.5;">
+      Dans <strong>Intervals.icu → Paramètres → Champs personnalisés (Bien-être)</strong>, crée ces 4 champs numériques (Code exact) pour tracer tes courbes :<br>
+      • <code>WBLT_G</code> (cm)<br>
+      • <code>WBLT_D</code> (cm)<br>
+      • <code>WBLT_Asym</code> (cm)<br>
+      • <code>Raideur_Cheville</code> (min)
+    </p>
+  </div>
+</main>
+
+<nav>
+  <button id="nav-measure" class="active" onclick="switchTab('measure')">
+    <span>📐</span><span>Mesure</span>
+  </button>
+  <button id="nav-history" onclick="switchTab('history')">
+    <span>📈</span><span>Tendances</span>
+  </button>
+  <button id="nav-settings" onclick="switchTab('settings')">
+    <span>⚙</span><span>Intervals API</span>
+  </button>
+</nav>
+
+<script>
+let state = {
+  L: 11.5,
+  R: 11.5,
+  stiffness: 0,
+  anterior: false,
+  achilles: false
+};
+
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function getLogs() {
+  return JSON.parse(localStorage.getItem('wblt_logs') || '[]');
+}
+
+function getBaseline7d() {
+  const logs = getLogs().slice(0, 7);
+  if (!logs.length) return { L: 11.5, R: 11.5, count: 0 };
+  const sumL = logs.reduce((acc, x) => acc + x.L, 0);
+  const sumR = logs.reduce((acc, x) => acc + x.R, 0);
+  return {
+    L: +(sumL / logs.length).toFixed(1),
+    R: +(sumR / logs.length).toFixed(1),
+    count: logs.length
+  };
+}
+
+// --- CONTRÔLES UI ---
+function toggleMemo() {
+  document.getElementById('protocolMemo').classList.toggle('hidden');
+}
+
+function setStiffness(mins, btn) {
+  state.stiffness = mins;
+  document.querySelectorAll('#stiffPresets .preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (navigator.vibrate) navigator.vibrate(25);
+}
+
+function adj(side, delta) {
+  state[side] = Math.max(4.0, Math.min(20.0, +(state[side] + delta).toFixed(1)));
+  document.getElementById('val' + side).textContent = state[side].toFixed(1);
+  if (navigator.vibrate) navigator.vibrate(20);
+}
+
+function toggleFlag(key) {
+  state[key] = !state[key];
+  const btn = document.getElementById(key === 'anterior' ? 'togAnterior' : 'togAchilles');
+  const lbl = document.getElementById(key === 'anterior' ? 'stateAnterior' : 'stateAchilles');
+  btn.classList.toggle('active', state[key]);
+  lbl.textContent = state[key] ? 'OUI' : 'NON';
+  if (navigator.vibrate) navigator.vibrate(30);
+}
+
+function switchTab(tab) {
+  ['measure', 'verdict', 'history', 'settings'].forEach(v => {
+    document.getElementById('view-' + v).classList.add('hidden');
+  });
+  ['measure', 'history', 'settings'].forEach(n => {
+    document.getElementById('nav-' + n).classList.remove('active');
+  });
+  document.getElementById('view-' + tab).classList.remove('hidden');
+  if (document.getElementById('nav-' + tab)) {
+    document.getElementById('nav-' + tab).classList.add('active');
+  }
+  if (tab === 'history') renderHistory();
+}
+
+// --- ALGORITHME DÉCISIONNEL BIOMÉCANIQUE ---
+function evaluateStatus(entry, base) {
+  const asym = +Math.abs(entry.L - entry.R).toFixed(1);
+  const dropL = +(entry.L - base.L).toFixed(1);
+  const dropR = +(entry.R - base.R).toFixed(1);
+  const worstDrop = Math.min(dropL, dropR);
+  const minVal = Math.min(entry.L, entry.R);
+
+  let level = 'green';
+  let headline = 'OK — FEU VERT MÉCANIQUE';
+  let reasons = [];
+  let directives = [];
+
+  // Critères ROUGE (Stop / Décharge)
+  if (worstDrop < -1.0 || entry.stiffness > 15 || entry.achilles || minVal < 10.0) {
+    level = 'red';
+    headline = 'STOP — DÉCHARGE CHEVILLE / TENDON';
+    if (worstDrop < -1.0) reasons.push(`Chute WBLT > 1,0 cm (${worstDrop} cm vs baseline)`);
+    if (entry.stiffness > 15) reasons.push(`Raideur à froid prolongée (> 15 min)`);
+    if (entry.achilles) reasons.push(`Sensibilité tendon d'Achille signalée`);
+    if (minVal < 10.0) reasons.push(`Amplitude critique (${minVal} cm < 10 cm)`);
+
+    directives = [
+      'Course / Trail / KV / Tapis : INTERDITS aujourd’hui. Bascule intégrale sur Home-Trainer / Vélo.',
+      'Vélo : Pédalage souple uniquement (> 90 rpm, faible couple, rester assis). Zéro sprint Z7 ni force à 50–65 rpm.',
+      'Renforcement / Récup : Zéro pliométrie ni kBox4 dynamique. Applique 10–14j d’isométrie lourde soléaire (genou 90°) ou KAATSU Cycle jambes (G+L/M).'
+    ];
+  }
+  // Critères ORANGE (Vigilance / Adaptation)
+  else if (worstDrop <= -0.6 || asym >= 0.5 || entry.stiffness >= 5 || entry.anterior || minVal < 11.0) {
+    level = 'amber';
+    headline = 'VIGILANCE — ADAPTATION REQUISE';
+    if (worstDrop <= -0.6) reasons.push(`Baisse modérée WBLT (${worstDrop} cm vs baseline)`);
+    if (asym >= 0.5) reasons.push(`Asymétrie G/D détectée (${asym} cm ≥ 0,5 cm)`);
+    if (entry.stiffness >= 5) reasons.push(`Raideur matinale modérée (${entry.stiffness} min)`);
+    if (entry.anterior) reasons.push(`Pincement pli antérieur (talocrural)`);
+
+    directives = [
+      'Vélo : Évite le fort couple à basse cadence (50–65 rpm). Privilégie une cadence fluide (88–95 rpm).',
+      'kBox4 / Renfo : Supprime les Pogo Hops et l’excentrique lourd. Remplace par de l’isométrie courte antalgique (4–5 × 6 s, genoux à 120–130°).',
+      entry.anterior
+        ? 'Conflit antérieur : Sur toute flexion de cheville, stoppe strictement la descente du talon à l’horizontale (zéro amplitude négative).'
+        : 'Tapis / Trail : Privilégie le vélo ou une pente régulière sans descente technique.'
+    ];
+  }
+  // Critères VERT (GO)
+  else {
+    reasons.push(`Amplitude validée (G: ${entry.L} cm / D: ${entry.R} cm, Δ ${asym} cm) et raideur < 5 min.`);
+    directives = [
+      'Charge libre validée : kBox4 excentrique (Bent-Knee / Straight-Leg 2:1, arrêt à l’horizontale) autorisé.',
+      'Pliométrie (Pogo Hops), sprints Z7 et travail de couple à basse cadence (50–65 rpm) autorisés.',
+      'Tapis de course (pente ≥ 4–6 %) ou trail validés selon ton plan du jour.'
+    ];
+  }
+
+  return { level, headline, reasons, directives, asym, dropL, dropR };
+}
+
+async function submitMeasurement() {
+  if (navigator.vibrate) navigator.vibrate([60, 40, 80]);
+  const base = getBaseline7d();
+  const now = new Date();
+  const hhmm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+  const entry = {
+    date: todayISO(),
+    time: hhmm,
+    L: state.L,
+    R: state.R,
+    stiffness: state.stiffness,
+    anterior: state.anterior,
+    achilles: state.achilles,
+    synced: false
+  };
+
+  const verdict = evaluateStatus(entry, base);
+  entry.level = verdict.level;
+  entry.asym = verdict.asym;
+
+  // Sauvegarde locale (remplace l'entrée du même jour si re-testé)
+  let logs = getLogs().filter(l => l.date !== entry.date);
+  logs.unshift(entry);
+  localStorage.setItem('wblt_logs', JSON.stringify(logs));
+
+  // Affichage immédiat du Bilan
+  renderVerdict(entry, verdict);
+  switchTab('verdict');
+
+  // Push immédiat vers Intervals.icu
+  await pushToIntervals(entry, verdict);
+}
+
+function renderVerdict(entry, verdict) {
+  const box = document.getElementById('verdictBox');
+  box.className = 'verdict-banner verdict-' + verdict.level;
+  document.getElementById('verdictHeadline').textContent = verdict.headline;
+  document.getElementById('verdictSummary').textContent = verdict.reasons.join(' · ');
+
+  document.getElementById('kpiL').textContent = `${entry.L.toFixed(1)} cm`;
+  document.getElementById('kpiLDelta').textContent = `G (${verdict.dropL >= 0 ? '+' : ''}${verdict.dropL} cm)`;
+
+  document.getElementById('kpiR').textContent = `${entry.R.toFixed(1)} cm`;
+  document.getElementById('kpiRDelta').textContent = `D (${verdict.dropR >= 0 ? '+' : ''}${verdict.dropR} cm)`;
+
+  document.getElementById('kpiAsym').textContent = `${verdict.asym.toFixed(1)} cm`;
+
+  document.getElementById('directiveList').innerHTML = verdict.directives.map(d => `<li>${d}</li>`).join('');
+}
+
+// --- API INTERVALS.ICU ---
+function getApiConfig() {
+  return JSON.parse(localStorage.getItem('wblt_intervals_cfg') || '{"athleteId":"0","apiKey":""}');
+}
+
+function saveApiConfig() {
+  const cfg = {
+    athleteId: document.getElementById('cfgAthleteId').value.trim() || '0',
+    apiKey: document.getElementById('cfgApiKey').value.trim()
+  };
+  localStorage.setItem('wblt_intervals_cfg', JSON.stringify(cfg));
+  updateSyncBadge(cfg.apiKey ? 'API Prête' : 'Non configuré', cfg.apiKey ? 'ok' : '');
+  alert('Configuration Intervals.icu enregistrée localement.');
+}
+
+function updateSyncBadge(text, cls) {
+  const b = document.getElementById('syncBadge');
+  b.textContent = text;
+  b.className = 'sync-pill ' + (cls || '');
+}
+
+async function pushToIntervals(entry, verdict) {
+  const cfg = getApiConfig();
+  const statusEl = document.getElementById('pushStatusText');
+
+  if (!cfg.apiKey) {
+    statusEl.textContent = '⚠ Clé API manquante (onglet Intervals API)';
+    updateSyncBadge('Clé manquante', 'err');
+    return;
+  }
+
+  statusEl.textContent = '⏳ Envoi vers Intervals.icu...';
+  const auth = 'Basic ' + btoa('API_KEY:' + cfg.apiKey);
+  const url = `https://intervals.icu/api/v1/athlete/${encodeURIComponent(cfg.athleteId || '0')}/wellness/${entry.date}`;
+
+  const statusLabel = verdict.level === 'green' ? 'VERT (GO)' : (verdict.level === 'amber' ? 'ORANGE (VIGILANCE)' : 'ROUGE (STOP)');
+  const flags = [entry.anterior ? 'Pincement ant.' : '', entry.achilles ? 'Achille sensible' : ''].filter(Boolean).join(', ');
+  const summaryLine = `[WBLT ${entry.time}] G: ${entry.L.toFixed(1)}cm | D: ${entry.R.toFixed(1)}cm (Δ ${entry.asym.toFixed(1)}cm) | Raideur: ${entry.stiffness}min${flags ? ' | ' + flags : ''} | Statut: ${statusLabel}`;
+
+  try {
+    // 1. Lecture éventuelle des commentaires existants du jour (pour ne pas écraser Handgrip/PVT)
+    let existingComments = '';
+    const getRes = await fetch(url, { headers: { 'Authorization': auth } });
+    if (getRes.ok) {
+      const data = await getRes.json();
+      if (data && data.comments) {
+        existingComments = data.comments
+          .split('\n')
+          .filter(line => !line.startsWith('[WBLT '))
+          .join('\n')
+          .trim();
+      }
+    }
+
+    const mergedComments = existingComments ? `${existingComments}\n${summaryLine}` : summaryLine;
+
+    const payload = {
+      WBLT_G: entry.L,
+      WBLT_D: entry.R,
+      WBLT_Asym: entry.asym,
+      Raideur_Cheville: entry.stiffness,
+      comments: mergedComments
+    };
+
+    const putRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': auth,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!putRes.ok) throw new Error(`HTTP ${putRes.status}`);
+
+    // Marquer comme synchronisé
+    const logs = getLogs();
+    const idx = logs.findIndex(l => l.date === entry.date);
+    if (idx !== -1) {
+      logs[idx].synced = true;
+      localStorage.setItem('wblt_logs', JSON.stringify(logs));
+    }
+
+    statusEl.textContent = '✓ Synchronisé sur Intervals.icu';
+    updateSyncBadge('✓ Sync OK', 'ok');
+  } catch (err) {
+    statusEl.textContent = '⚠ Sauvé en local (hors-ligne / erreur API)';
+    updateSyncBadge('En attente sync', 'err');
+  }
+}
+
+async function retryLastPush() {
+  const logs = getLogs();
+  if (!logs.length) return;
+  const last = logs[0];
+  const base = getBaseline7d();
+  const verdict = evaluateStatus(last, base);
+  await pushToIntervals(last, verdict);
+}
+
+// --- HISTORIQUE & GRAPHIQUE SVG ---
+function renderHistory() {
+  const logs = getLogs();
+  const list = document.getElementById('historyList');
+  if (!logs.length) {
+    list.textContent = 'Aucun relevé enregistré.';
+    document.getElementById('chartContainer').innerHTML = '';
+    return;
+  }
+
+  list.innerHTML = logs.slice(0, 30).map(l => {
+    const color = l.level === 'green' ? 'var(--green)' : (l.level === 'amber' ? 'var(--amber)' : 'var(--red)');
+    return `
+      <div style="padding:9px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;color:var(--text);">${l.date} <span style="font-weight:400;color:var(--muted);">(${l.time})</span></div>
+          <div style="font-size:0.75rem;margin-top:2px;">G: <strong>${l.L.toFixed(1)}</strong> · D: <strong>${l.R.toFixed(1)}</strong> · Δ ${l.asym.toFixed(1)} cm · Raideur ${l.stiffness}m</div>
+        </div>
+        <div style="text-align:right;">
+          <span style="color:${color};font-weight:800;font-size:0.78rem;">● ${l.level.toUpperCase()}</span>
+          <div style="font-size:0.68rem;color:var(--muted);">${l.synced ? '✓ Intervals' : 'Local'}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Courbe SVG 30 derniers jours
+  const recent = [...logs].slice(0, 30).reverse();
+  const w = 320, h = 150, pad = 18;
+  const minY = 8, maxY = 16;
+  const toX = (i) => recent.length === 1 ? w / 2 : pad + (i / (recent.length - 1)) * (w - 2 * pad);
+  const toY = (v) => h - pad - ((Math.max(minY, Math.min(maxY, v)) - minY) / (maxY - minY)) * (h - 2 * pad);
+
+  const ptsL = recent.map((d, i) => `${toX(i)},${toY(d.L)}`).join(' ');
+  const ptsR = recent.map((d, i) => `${toX(i)},${toY(d.R)}`).join(' ');
+  const y11 = toY(11.0);
+
+  document.getElementById('chartContainer').innerHTML = `
+    <svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">
+      <line x1="${pad}" y1="${y11}" x2="${w - pad}" y2="${y11}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>
+      <polyline fill="none" stroke="#38bdf8" stroke-width="2.5" points="${ptsL}"/>
+      <polyline fill="none" stroke="#34d399" stroke-width="2.5" points="${ptsR}"/>
+      ${recent.map((d, i) => `<circle cx="${toX(i)}" cy="${toY(d.L)}" r="3" fill="#38bdf8"/><circle cx="${toX(i)}" cy="${toY(d.R)}" r="3" fill="#34d399"/>`).join('')}
+    </svg>
+  `;
+}
+
+function exportCSV() {
+  const logs = getLogs();
+  const header = 'date,time,wblt_g_cm,wblt_d_cm,asym_cm,raideur_min,conflit_ant,achille_sensible,status\n';
+  const rows = logs.map(l => `${l.date},${l.time},${l.L},${l.R},${l.asym},${l.stiffness},${l.anterior},${l.achilles},${l.level}`).join('\n');
+  const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `wblt-cheville-${todayISO()}.csv`;
+  a.click();
+}
+
+// --- INITIALISATION ---
+function init() {
+  document.getElementById('headerDate').textContent = `Relevé à froid · ${todayISO()}`;
+  const logs = getLogs();
+  if (logs.length) {
+    state.L = logs[0].L;
+    state.R = logs[0].R;
+    document.getElementById('valL').textContent = state.L.toFixed(1);
+    document.getElementById('valR').textContent = state.R.toFixed(1);
+  }
+  const base = getBaseline7d();
+  if (base.count > 0) {
+    document.getElementById('baseRefLabel').textContent = `Base 7j : G ${base.L} / D ${base.R} cm`;
+  }
+
+  const cfg = getApiConfig();
+  document.getElementById('cfgAthleteId').value = cfg.athleteId || '0';
+  document.getElementById('cfgApiKey').value = cfg.apiKey || '';
+  if (cfg.apiKey) updateSyncBadge('API Prête', 'ok');
+
+  // Auto-sync des entrées locales non poussées si reconnexion
+  if (navigator.onLine && cfg.apiKey && logs.some(l => !l.synced)) {
+    retryLastPush();
+  }
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
+  }
+}
+init();
+</script>
+</body>
+</html>
