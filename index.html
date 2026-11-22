@@ -372,7 +372,7 @@
   <div class="card">
     <h2>Connexion & Vérification Champs Intervals.icu</h2>
     <p style="font-size:0.8rem;color:var(--muted);margin-top:0;line-height:1.45;">
-      Stockés <strong>uniquement en local</strong>. Teste l'acceptation réelle des champs <code>WBLT_G</code>, <code>WBLT_D</code>, <code>WBLT_Asym</code> et <code>Raideur_Cheville</code> sur la fiche du jour.
+      Stockés <strong>uniquement en local</strong>. Teste l'acceptation réelle des champs <code>WBLTG</code>, <code>WBLTD</code>, <code>WBLTAsym</code> et <code>RaideurCheville</code> sur la fiche du jour.
     </p>
 
     <label style="font-size:0.8rem;font-weight:700;">Athlete ID (ex: 0 ou i208793)</label>
@@ -404,7 +404,7 @@
 </nav>
 
 <script>
-const FIELD_CODES = ['WBLT_G', 'WBLT_D', 'WBLT_Asym', 'Raideur_Cheville'];
+const FIELD_CODES = ['WBLTG', 'WBLTD', 'WBLTAsym', 'RaideurCheville'];
 
 let state = {
   L: 11.5,
@@ -639,10 +639,10 @@ async function verifyFieldsViaWellness() {
     if (getBefore.ok) current = await getBefore.json();
 
     const testPayload = {
-      WBLT_G: current.WBLT_G !== undefined && current.WBLT_G !== null ? current.WBLT_G : state.L,
-      WBLT_D: current.WBLT_D !== undefined && current.WBLT_D !== null ? current.WBLT_D : state.R,
-      WBLT_Asym: current.WBLT_Asym !== undefined && current.WBLT_Asym !== null ? current.WBLT_Asym : asym,
-      Raideur_Cheville: current.Raideur_Cheville !== undefined && current.Raideur_Cheville !== null ? current.Raideur_Cheville : state.stiffness
+      WBLTG: current.WBLTG !== undefined && current.WBLTG !== null ? current.WBLTG : state.L,
+      WBLTD: current.WBLTD !== undefined && current.WBLTD !== null ? current.WBLTD : state.R,
+      WBLTAsym: current.WBLTAsym !== undefined && current.WBLTAsym !== null ? current.WBLTAsym : asym,
+      RaideurCheville: current.RaideurCheville !== undefined && current.RaideurCheville !== null ? current.RaideurCheville : state.stiffness
     };
 
     const putRes = await fetch(url, {
@@ -726,10 +726,10 @@ async function pushToIntervals(entry, verdict) {
     const mergedComments = existingComments ? `${existingComments}\n${summaryLine}` : summaryLine;
 
     const payload = {
-      WBLT_G: entry.L,
-      WBLT_D: entry.R,
-      WBLT_Asym: entry.asym,
-      Raideur_Cheville: entry.stiffness,
+      WBLTG: entry.L,
+      WBLTD: entry.R,
+      WBLTAsym: entry.asym,
+      RaideurCheville: entry.stiffness,
       comments: mergedComments
     };
 
@@ -887,3 +887,4 @@ init();
 </script>
 </body>
 </html>
+
